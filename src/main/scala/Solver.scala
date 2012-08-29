@@ -27,7 +27,7 @@ object Solver {
     for (i <- 0 until matrix.length) {
       totalCost += obtainRowCost(matrix(i))
     }
-    totalCost //+ obtainQuadrantCosts(matrix)
+    totalCost + obtainQuadrantCosts(matrix)
   }
 
   def obtainRowCost(row: Array[Int]): Int = {
@@ -78,7 +78,7 @@ object Solver {
     var newCost = Integer.MAX_VALUE
 
     //Debugger.printToFile(new File("output"))(p => {
-    while (cost > 0) {
+    while (cost > 0 && iterations < 100000) {
       // Choose a random column
       val column = (random * 9).toInt
    
@@ -100,15 +100,15 @@ object Solver {
       val quadRange1 = findQuadrantRange(r1, column)
       val quadRange2 = findQuadrantRange(r2, column)
       val oldQuadrantCosts = 
-        obtainQuadrantCost(quadRange1._1, quadRange1._2) +
-        obtainQuadrantCost(quadRange2._1, quadRange2._2)
+        obtainQuadrantCost(matrix, quadRange1._1, quadRange1._2) +
+        obtainQuadrantCost(matrix, quadRange2._1, quadRange2._2)
       swap(matrix, column, r1, r2)
       val newQuadrantCosts =
-        obtainQuadrantCost(quadRange1._1, quadRange1._2) +
-        obtainQuadrantCost(quadRange2._1, quadRange2._2)
+        obtainQuadrantCost(matrix, quadRange1._1, quadRange1._2) +
+        obtainQuadrantCost(matrix, quadRange2._1, quadRange2._2)
       swap(matrix, column, r1, r2)
 
-      newCost = cost - (oldRowCost - newRowCost)
+      newCost = cost - (oldRowCost - newRowCost) - (oldQuadrantCosts - newQuadrantCosts)
 
       // Compare costs
 
