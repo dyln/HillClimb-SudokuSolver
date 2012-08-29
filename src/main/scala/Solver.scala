@@ -6,21 +6,7 @@ import scala.math.random
 
 object Solver {
 
-  def findQuadrant(i: Int, j: Int): Int = {
-    (i,j) match {
-      case (x,y) if x <= 2 && y <= 2 => 1
-      case (x,y) if x <= 2 && y <= 5 => 2
-      case (x,y) if x <= 2 && y <= 8 => 3
-      case (x,y) if x <= 5 && y <= 2 => 4
-      case (x,y) if x <= 5 && y <= 5 => 5 
-      case (x,y) if x <= 5 && y <= 8 => 6
-      case (x,y) if x <= 8 && y <= 2 => 7
-      case (x,y) if x <= 8 && y <= 5 => 8
-      case (x,y) if x <= 8 && y <= 8 => 9
-    }
-  }
-
-  /* Method that will return a range of rows and columns for a specific indeces lookup */
+  /* Method that will return a range of rows and columns for a specific indices lookup */
   def findQuadrantRange(i: Int, j: Int): (Range, Range) = {
     (i,j) match {
       case (x,y) if x <= 2 && y <= 2 => (0 to 2, 0 to 2)
@@ -111,6 +97,16 @@ object Solver {
       val newRowCost = obtainRowCost(rowcpy1) + obtainRowCost(rowcpy2)
 
       // Obtain the cost of swapping quadrant values
+      val quadRange1 = findQuadrantRange(r1, column)
+      val quadRange2 = findQuadrantRange(r2, column)
+      val oldQuadrantCosts = 
+        obtainQuadrantCost(quadRange1._1, quadRange1._2) +
+        obtainQuadrantCost(quadRange2._1, quadRange2._2)
+      swap(matrix, column, r1, r2)
+      val newQuadrantCosts =
+        obtainQuadrantCost(quadRange1._1, quadRange1._2) +
+        obtainQuadrantCost(quadRange2._1, quadRange2._2)
+      swap(matrix, column, r1, r2)
 
       newCost = cost - (oldRowCost - newRowCost)
 
@@ -122,7 +118,6 @@ object Solver {
       else newCost = cost
 
       iterations += 1
-    
     }
   //})
   }
