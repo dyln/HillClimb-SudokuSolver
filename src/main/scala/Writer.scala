@@ -3,12 +3,13 @@ package org.sudoku.io
 object Writer {
 
   def printMatrix(matrix: Array[Array[Int]]) {
-    def stringRepr(m: Array[Array[Int]]) = {
-      ("" /: matrix) { (str, row) =>
-        str + row.mkString("", " ", "\n")
-      }
-    }
     println { stringRepr(matrix) }
+  }
+
+  def stringRepr(matrix: Array[Array[Int]]) = {
+    ("" /: matrix) { (str, row) =>
+      str + row.mkString("", " ", "\n")
+    }
   }
 
   def printQuadrants(matrix: Array[Array[Int]]) {

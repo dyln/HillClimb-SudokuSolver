@@ -1,10 +1,11 @@
 package org.sudoku.solver
 
 import scala.math.random
+import scala.collection.immutable.HashSet
 
 object Initializer {
   
-  var fixedNumbers = Set[(Int,Int)]()
+  var fixedNumbers = HashSet[(Int,Int)]()
 
   def addFixedNumbers(matrix: Array[Array[Int]], column: Int): Set[Int] = {
     var set = Set[Int]()
@@ -17,9 +18,10 @@ object Initializer {
     set
   }
 
-  // Return a set of fixed numbers
-  def fillMatrix(matrix: Array[Array[Int]]) = {
-    for (i <- 0 until matrix.length) {
+  // generate a random sudoku
+  def randomSudoku(m: Array[Array[Int]]) = {
+   val matrix = m.map(_.clone) 
+   for (i <- 0 until matrix.length) {
       var set = addFixedNumbers(matrix, i)
       for (j <- 0 until matrix.length) {
         if (matrix(j)(i) > 0) set += matrix(j)(i)  
@@ -36,8 +38,8 @@ object Initializer {
         }
       }
     }
-
-    fixedNumbers
+                                                      
+    matrix 
   }
 
 }
