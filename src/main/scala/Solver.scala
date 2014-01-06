@@ -1,12 +1,17 @@
 package org.sudoku.solver
 
-import org.sudoku.io.{Reader, Writer}
-
+import org.sudoku.io.{ Reader, Writer }
 import scala.math.random
 import scala.util.Random
 import scala.collection.immutable.HashSet
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ Future, Await, Promise}
+import scala.util.{ Try, Success, Failure }
+import scala.concurrent.duration._
 
 object Solver {
+  type Matrix = Array[Array[Int]]
+
   // Range of indeces for the 9 quadrants
   val r1 = (0 to 2).toArray
   val r2 = (3 to 5).toArray
@@ -19,21 +24,20 @@ object Solver {
 
   /* Method that will return a range of rows and columns for a specific indices lookup */
   def findQuadrantRange(i: Int, j: Int): (Array[Int], Array[Int]) = {
-    (i,j) match {
-      case (x,y) if x <= 2 && y <= 2 => quadrants(0)
-      case (x,y) if x <= 2 && y <= 5 => quadrants(1)
-      case (x,y) if x <= 2 && y <= 8 => quadrants(2)
-      case (x,y) if x <= 5 && y <= 2 => quadrants(3)
-      case (x,y) if x <= 5 && y <= 5 => quadrants(4)
-      case (x,y) if x <= 5 && y <= 8 => quadrants(5)
-      case (x,y) if x <= 8 && y <= 2 => quadrants(6)
-      case (x,y) if x <= 8 && y <= 5 => quadrants(7)
-      case (x,y) if x <= 8 && y <= 8 => quadrants(8)
-    }
+   if (i <= 2 && j <= 2) quadrants(0)
+   else if (i <= 2 && j <= 5)  quadrants(1)
+   else if (i <= 2 && j <= 8)  quadrants(2)
+   else if (i <= 5 && j <= 2)  quadrants(3)
+   else if (i <= 5 && j <= 5)  quadrants(4)
+   else if (i <= 5 && j <= 8)  quadrants(5)
+   else if (i <= 8 && j <= 2)  quadrants(6)
+   else if (i <= 8 && j <= 5)  quadrants(7)
+   else if (i <= 8 && j <= 8)  quadrants(8)
+   else quadrants(0)
   }
 
   // Cost is obtained by conflicting number collisions in rows and quadrants
-  def obtainCost(matrix: Array[Array[Int]]): Int = {
+  def obtainCost(matrix: Matrix): Int = {
     var i, totalCost = 0
     while (i < size) {
       totalCost += obtainRowCost(matrix(i))
@@ -71,7 +75,7 @@ object Solver {
   }
 
   /* Method that will obtain the total cost of each of the 9 quadrants */
-  def obtainQuadrantCosts(matrix: Array[Array[Int]]) = {
+  def obtainQuadrantCosts(matrix: Matrix) = {
     var i, totalCost = 0
     while (i < size) {
       val (rows, columns) = quadrants(i)
@@ -82,17 +86,17 @@ object Solver {
   }
 
   /* Pick random rows that are distinct */
-  def pickRandomRows(c: Int, r1: Int, r2: Int, fixedNumbers: HashSet[(Int,Int)]): (Int, Int) = {
-    if (r1 == r2 || 
-     (fixedNumbers contains (r1,c)) || 
-     (fixedNumbers contains (r2,c))) {
+  def pickRandomRows(c: Int, r1: Int, r2: Int, fixedNumbers: HashSet[(Int, Int)]): (Int, Int) = {
+    if (r1 == r2 ||
+      (fixedNumbers contains (r1, c)) ||
+      (fixedNumbers contains (r2, c))) {
       val r = new Random
       pickRandomRows(c, r.nextInt(9), r.nextInt(9), fixedNumbers)
     } else
       (r1, r2)
   }
 
-  def hillClimb(matrix: Array[Array[Int]]) {
+  def hillClimb(matrix: Matrix): Matrix = {
 
     var iterations = 0
     var cost = obtainCost(matrix)
@@ -102,7 +106,7 @@ object Solver {
     while (cost > 0 || iterations > 5000000) {
       // Choose a random column
       val column = (random * 9).toInt
-   
+
       // Pick two random rows to swap
       val (r1, r2) = pickRandomRows(column, 0, 0, fixedNumbers)
 
@@ -116,7 +120,7 @@ object Solver {
           obtainQuadrantCost(matrix, quadRange1._1, quadRange1._2) * 2
         else {
           obtainQuadrantCost(matrix, quadRange1._1, quadRange1._2) +
-          obtainQuadrantCost(matrix, quadRange2._1, quadRange2._2)
+            obtainQuadrantCost(matrix, quadRange2._1, quadRange2._2)
         }
 
       // Swap the values and obtain new costs
@@ -127,7 +131,7 @@ object Solver {
           obtainQuadrantCost(matrix, quadRange1._1, quadRange1._2) * 2
         else {
           obtainQuadrantCost(matrix, quadRange1._1, quadRange1._2) +
-          obtainQuadrantCost(matrix, quadRange2._1, quadRange2._2)
+            obtainQuadrantCost(matrix, quadRange2._1, quadRange2._2)
         }
 
       // Calculate only delta
@@ -139,9 +143,12 @@ object Solver {
 
       iterations += 1
     }
-    if (iterations > 5000000)
-      println("Iterations exceeded 5 million!")
+    if (iterations > 5000000) {
+      throw new Exception("Iterations exceeded 5 million!")
+    }
     println(s"Iterations: $iterations")
+
+    matrix
   }
 
   def randomNo = {
@@ -160,10 +167,11 @@ object Solver {
     val matrix = Reader.readInput(args(0))
     Writer.printMatrix(matrix)
 
-    val sudoku = Initializer.randomSudoku(matrix)
+    val sudokus = List.fill(4)(Initializer.randomSudoku(matrix))
+    val futureSudokus = sudokus.map(sudoku => Future(hillClimb(sudoku)))
 
-    hillClimb(sudoku)
-    println(if (Verifier.verifySolution(sudoku)) "Correct" else "Incorrect")
-    Writer.printQuadrants(sudoku)
+    val solved = Await.result(Future.firstCompletedOf(futureSudokus), 2.minutes)
+    Writer.printQuadrants(solved)
+    
   }
 }

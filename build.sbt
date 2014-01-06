@@ -1,6 +1,6 @@
 sbtVersion := "0.13.0"
 
-name := "test-project"
+name := "hillclimb-sudoku-solver"
 
 version := "1.0"
 
