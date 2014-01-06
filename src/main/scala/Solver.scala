@@ -32,8 +32,7 @@ object Solver {
    else if (i <= 5 && j <= 8)  quadrants(5)
    else if (i <= 8 && j <= 2)  quadrants(6)
    else if (i <= 8 && j <= 5)  quadrants(7)
-   else if (i <= 8 && j <= 8)  quadrants(8)
-   else quadrants(0)
+   else quadrants(8) // i <= 8 && j <= 8
   }
 
   // Cost is obtained by conflicting number collisions in rows and quadrants
@@ -59,7 +58,7 @@ object Solver {
   }
 
   /* Method will obtain the cost of a single quadrant */
-  def obtainQuadrantCost(matrix: Array[Array[Int]], rows: Array[Int], columns: Array[Int]): Int = {
+  def obtainQuadrantCost(matrix: Matrix, rows: Array[Int], columns: Array[Int]): Int = {
     var r, c, totalCost = 0
     var set = HashSet[Int]()
     while (r < 3) {
@@ -145,6 +144,8 @@ object Solver {
     }
     if (iterations > 5000000) {
       throw new Exception("Iterations exceeded 5 million!")
+    } else if (!Verifier.verifySolution(matrix)) {
+      throw new Exception("Computed incorrect solution")
     }
     println(s"Iterations: $iterations")
 
@@ -157,7 +158,7 @@ object Solver {
   }
 
   /* Method that will swap two values in the same column but in distinct rows in a matrix */
-  def swap(matrix: Array[Array[Int]], c: Int, r1: Int, r2: Int) {
+  def swap(matrix: Matrix, c: Int, r1: Int, r2: Int) {
     val aux = matrix(r1)(c)
     matrix(r1)(c) = matrix(r2)(c)
     matrix(r2)(c) = aux
