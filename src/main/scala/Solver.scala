@@ -94,6 +94,15 @@ object Solver {
     } else
       (r1, r2)
   }
+  
+  def formatIterations(iterations: Int): String = {
+    val iterationsStr = iterations.toString
+    val (fst, snd) = iterationsStr.splitAt(iterationsStr.size % 3)
+    if (fst.nonEmpty)
+      fst + ", " + snd.sliding(3, 3).toList.mkString("", ", ", "")
+    else
+      snd.sliding(3, 3).toList.mkString("", ", ", "")
+  }
 
   def hillClimb(matrix: Matrix): Matrix = {
 
@@ -147,7 +156,8 @@ object Solver {
     } else if (!Verifier.verifySolution(matrix)) {
       throw new Exception("Computed incorrect solution")
     }
-    println(s"Iterations: $iterations")
+    
+    println(s"Iterations: ${formatIterations(iterations)}")
 
     matrix
   }
