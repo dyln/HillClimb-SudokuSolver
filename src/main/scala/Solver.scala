@@ -11,6 +11,7 @@ import scala.concurrent.duration._
 
 object Solver {
   type Matrix = Array[Array[Int]]
+  val r = new Random
 
   // Range of indeces for the 9 quadrants
   val r1 = (0 to 2).toArray
@@ -89,7 +90,6 @@ object Solver {
     if (r1 == r2 ||
       (fixedNumbers contains (r1, c)) ||
       (fixedNumbers contains (r2, c))) {
-      val r = new Random
       pickRandomRows(c, r.nextInt(9), r.nextInt(9), fixedNumbers)
     } else
       (r1, r2)
@@ -99,9 +99,9 @@ object Solver {
     val iterationsStr = iterations.toString
     val (fst, snd) = iterationsStr.splitAt(iterationsStr.size % 3)
     if (fst.nonEmpty)
-      fst + ", " + snd.sliding(3, 3).toList.mkString("", ", ", "")
+      fst + ", " + snd.sliding(3, 3).toList.mkString("", ",", "")
     else
-      snd.sliding(3, 3).toList.mkString("", ", ", "")
+      snd.sliding(3, 3).toList.mkString("", ",", "")
   }
 
   def hillClimb(matrix: Matrix): Matrix = {
@@ -151,7 +151,7 @@ object Solver {
 
       iterations += 1
     }
-    if (iterations > 5000000) {
+    if (iterations > 4000000) {
       throw new Exception("Iterations exceeded 5 million!")
     } else if (!Verifier.verifySolution(matrix)) {
       throw new Exception("Computed incorrect solution")
@@ -181,7 +181,7 @@ object Solver {
     val sudokus = List.fill(4)(Initializer.randomSudoku(matrix))
     val futureSudokus = sudokus.map(sudoku => Future(hillClimb(sudoku)))
 
-    val solved = Await.result(Future.firstCompletedOf(futureSudokus), 2.minutes)
+    val solved = Await.result(Future.firstCompletedOf(futureSudokus), 3.5.minutes)
     Writer.printQuadrants(solved)
     
   }
